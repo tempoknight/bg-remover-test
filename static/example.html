@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Background</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            justify-content: center;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            text-decoration: none;
+            color: #333;
+            margin: 0 10px;
+            font-weight: 500;
+        }
+        .navbar .upload-button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navbar .upload-button:hover {
+            background-color: #0056b3;
+        }
+        .container {
+            text-align: center;
+            margin-top: 80px; /* Adjusted to account for fixed navbar */
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+        .container h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .container p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        .container a.upload-button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .container a.upload-button:hover {
+            background-color: #0056b3;
+        }
+        .drag-drop-area {
+            border: 2px dashed #007bff;
+            border-radius: 4px;
+            padding: 40px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .drag-drop-area.dragover {
+            background-color: #e9f5ff;
+        }
+        .examples {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .examples img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .examples img:hover {
+            transform: scale(1.05);
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        #fileInput {
+            display: none;
+        }
+        #loaderOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #loaderOverlay img {
+            width: 100px;
+        }
+        .blur {
+            filter: blur(5px);
+        }
+        #resultContainer img {
+            max-width: 500px;
+            height: auto;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="logo">
+            <a href="#">remove<span style="color: #007bff;">bg</span></a>
+        </div>
+        <div class="links">
+            <a href="#">Remove Background</a>
+            <a href="#">How to use</a>
+            <a href="#">Tools & API</a>
+            <a href="#">Pricing</a>
+        </div>
+        <div class="auth">
+            <a href="#">Log in</a>
+            <a href="#" class="upload-button" style="background-color: #ccc; color: #333;">Sign up</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Upload an image to remove the background</h1>
+        <a href="#" class="upload-button" id="uploadButton">Upload Image</a>
+        <input type="file" id="fileInput">
+        <p>or drop a file, paste image or <a href="#">URL</a></p>
+        <div class="drag-drop-area" id="dragDropArea">
+            Drag & drop your image here
+        </div>
+
+
+        <div class="examples">
+            <img src="example1.jpg" alt="Example 1">
+            <img src="example1.jpg" alt="Example 2">
+            <img src="example1.jpg" alt="Example 3">
+            <img src="example1.jpg" alt="Example 4">
+        </div>
+
+        <div class="footer">
+            By uploading an image or URL you agree to our <a href="#">Terms of Service</a>. To learn more about how remove.bg handles your personal data, check our <a href="#">Privacy Policy</a>.
+        </div>
+
+        <div id="loaderOverlay">
+            <img src="progress.gif" alt="Loading...">
+        </div>
+    </div>
+
+    <script>
+        const uploadButton = document.getElementById('uploadButton');
+        const fileInput = document.getElementById('fileInput');
+        const dragDropArea = document.getElementById('dragDropArea');
+        const progress = document.getElementById('progress'); // Add this line
+        const resultContainer = document.getElementById('resultContainer'); // Add this line
+        
+
+        uploadButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        dragDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+
+
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                console.log('File uploaded:', file.name);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                
+
+                loaderOverlay.style.display = 'flex';
+
+
+                fetch('http://localhost:8000/uploadfile/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.style.maxWidth = '500px'; // Adjust this value as needed
+                    img.style.height = 'auto'; // Maintain aspect ratio
+                    document.body.appendChild(img); // You can append this to a specific container
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                })
+                .finally(() => {
+                    // Hide progress GIF
+                    loaderOverlay.style.display = 'none';
+                }); 
+            }
+        }
+    </script>
+
+</body>
+</html>

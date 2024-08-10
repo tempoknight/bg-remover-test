@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Draw on Image</title>
+</head>
+<body style="display: flex; flex-direction: column;">  
+  <img id="myImage" src="example1.jpg" alt="Image to draw on" style="position: absolute; z-index: -1;">
+  <canvas id="myCanvas" width="400" height="300"></canvas>
+  <div style="display: flex; justify-content: center;">  
+    <label for="brushSize">Brush Size:</label>
+    <input type="number" id="brushSize" value="5" min="1" max="50">
+  </div>
+
+  <script>
+    const image = document.getElementById("myImage");
+    const canvas = document.getElementById("myCanvas");
+    const brushSizeInput = document.getElementById("brushSize");
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = brushSizeInput.value;
+
+    let isDrawing = false;
+    let lastX, lastY;
+
+    // Ensure the image is loaded before allowing drawing
+    image.onload = function() {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      canvas.style.visibility = "visible";
+      canvas.style.position = "absolute";
+      canvas.style.top = image.offsetTop + "px";
+      canvas.style.left = image.offsetLeft + "px";
+    };
+
+    canvas.addEventListener("mousedown", (e) => {
+      isDrawing = true;
+      lastX = e.offsetX;
+      lastY = e.offsetY;
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(155, 0, 0, 0.5)";
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (isDrawing) {
+        const newX = e.offsetX;
+        const newY = e.offsetY;
+        const distance = Math.hypot(newX - lastX, newY - lastY);
+
+        if (distance > ctx.lineWidth / 2) { // Adjust the threshold as needed
+          ctx.lineTo(newX, newY);
+          ctx.stroke();
+          lastX = newX;
+          lastY = newY;
+        }
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      isDrawing = false;
+    });
+
+    brushSizeInput.addEventListener("change", (e) => {
+      ctx.lineWidth = e.target.value;
+    });
+  </script>
+</body>
+</html>

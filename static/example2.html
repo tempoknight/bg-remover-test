@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Background</title>
+    <style>
+        /* Existing styles remain unchanged */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            justify-content: center;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .navbar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 30px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            text-decoration: none;
+            color: #333;
+            margin: 0 10px;
+            font-weight: 500;
+        }
+        .navbar .upload-button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .navbar .upload-button:hover {
+            background-color: #0056b3;
+        }
+        .container {
+            text-align: center;
+            margin-top: 80px; /* Adjusted to account for fixed navbar */
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+        .container h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .container p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        .container a.upload-button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .container a.upload-button:hover {
+            background-color: #0056b3;
+        }
+        .drag-drop-area {
+            border: 2px dashed #007bff;
+            border-radius: 4px;
+            padding: 40px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .drag-drop-area.dragover {
+            background-color: #e9f5ff;
+        }
+        .examples {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .examples img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .examples img:hover {
+            transform: scale(1.05);
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        #fileInput {
+            display: none;
+        }
+        #loaderOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #loaderOverlay img {
+            width: 100px;
+        }
+        .blur {
+            filter: blur(5px);
+        }
+        #resultContainer img {
+            max-width: 150px;
+            height: auto;
+        }
+        .gallery {
+            display: flex;
+            overflow-x: scroll;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .gallery img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .gallery img:hover {
+            transform: scale(1.05);
+        }
+        .gallery-item {
+            position: relative;
+            display: inline-block;
+        }
+        .gallery-item .original-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .gallery-item .original-button:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+        /* Display area for full-size images */
+        .image-display {
+            margin-top: 40px;
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+        }
+        .image-display img {
+            max-width: 100%;
+            height: auto;
+        }
+        .image-display p {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .image-display button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .image-display button:hover {
+            background-color: #0056b3;
+        }
+        /* Add styles for range input */
+        .range-input {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .range-input label {
+            font-size: 1.1em;
+        }
+
+        .range-input input[type="range"] {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="navbar">
+        <div class="logo">
+            <a href="#">remove<span style="color: #007bff;">bg</span></a>
+        </div>
+        <div class="links">
+            <a href="#">Remove Background</a>
+            <a href="#">How to use</a>
+            <a href="#">Tools & API</a>
+            <a href="#">Pricing</a>
+        </div>
+        <div class="auth">
+            <a href="#">Log in</a>
+            <a href="#" class="upload-button" style="background-color: #ccc; color: #333;">Sign up</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Upload an image to remove the background</h1>
+        <a href="#" class="upload-button" id="uploadButton">Upload Image</a>
+        <input type="file" id="fileInput">
+        <p>or drop a file, paste image or <a href="#">URL</a></p>
+        <div class="drag-drop-area" id="dragDropArea">
+            Drag & drop your image here
+        </div>
+
+        <div class="range-input">
+            <label for="qualityRange">Threshold: <span id="qualityValue">100</span></label>
+            <input type="range" id="qualityRange" min="1" max="100" value="100">
+        </div>
+
+
+        <div class="examples">
+            <img src="example1.jpg" alt="Example 1">
+            <img src="example1.jpg" alt="Example 2">
+            <img src="example1.jpg" alt="Example 3">
+            <img src="example1.jpg" alt="Example 4">
+        </div>
+
+        <div class="footer">
+            By uploading an image or URL you agree to our <a href="#">Terms of Service</a>. To learn more about how remove.bg handles your personal data, check our <a href="#">Privacy Policy</a>.
+        </div>
+
+        <div id="loaderOverlay">
+            <img src="progress.gif" alt="Loading...">
+        </div>
+
+        <!-- Gallery Section -->
+        <div id="resultContainer" class="gallery">
+            <!-- Gallery items will be added here dynamically -->
+        </div>
+
+        <!-- Full-size image display area -->
+        <div id="imageDisplay" class="image-display" style="display: none;">
+            <img id="displayImage" src="" alt="Full-size Image">
+            <p id="imageCaption"></p>
+        </div>
+    </div>
+
+    <script>
+        const uploadButton = document.getElementById('uploadButton');
+        const fileInput = document.getElementById('fileInput');
+        const dragDropArea = document.getElementById('dragDropArea');
+        const loaderOverlay = document.getElementById('loaderOverlay');
+        const resultContainer = document.getElementById('resultContainer');
+        const imageDisplay = document.getElementById('imageDisplay');
+        const displayImage = document.getElementById('displayImage');
+        const imageCaption = document.getElementById('imageCaption');
+        const qualityRange = document.getElementById('qualityRange');
+        const qualityValue = document.getElementById('qualityValue');
+
+        // Update quality value display when range input changes
+        qualityRange.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value;
+        });
+
+        uploadButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        dragDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+
+        dragDropArea.addEventListener('dragleave', () => {
+            dragDropArea.classList.remove('dragover');
+        });
+
+        dragDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                const quality = parseInt(qualityRange.value);
+                console.log('File uploaded:', file.name);
+                console.log('Quality selected:', quality);
+                console.log("type ", typeof quality);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('number', quality);
+
+                loaderOverlay.style.display = 'flex';
+
+                fetch('http://localhost:8000/uploadfile2/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const img = document.createElement('img');
+                    img.src = url;
+
+                    const galleryItem = document.createElement('div');
+                    galleryItem.classList.add('gallery-item');
+                    galleryItem.appendChild(img);
+
+                    const originalButton = document.createElement('button');
+                    originalButton.classList.add('original-button');
+                    originalButton.textContent = 'Original';
+                    originalButton.addEventListener('click', () => {
+                        showImageInDisplay(URL.createObjectURL(file), 'Original Image');
+                    });
+                    galleryItem.appendChild(originalButton);
+
+                    img.addEventListener('click', () => {
+                        showImageInDisplay(url, 'Processed Image');
+                    });
+
+                    resultContainer.appendChild(galleryItem);
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                })
+                .finally(() => {
+                    loaderOverlay.style.display = 'none';
+                    display = 'none';   
+                });
+            }
+        }
+
+        function showImageInDisplay(url, caption) {
+            displayImage.src = url;
+            imageCaption.textContent = caption;
+            imageDisplay.style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
